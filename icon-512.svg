@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#071A33"/>
-  <circle cx="256" cy="220" r="132" fill="none" stroke="#D31027" stroke-width="14"/>
-  <text x="256" y="205" font-family="Arial Narrow, Arial, sans-serif" font-size="86" font-weight="700" fill="#FFFFFF" text-anchor="middle">ZS</text>
-  <text x="256" y="255" font-family="Arial Narrow, Arial, sans-serif" font-size="30" letter-spacing="4" fill="#D31027" text-anchor="middle">SANTE</text>
-  <rect x="120" y="360" width="272" height="10" rx="5" fill="#D31027"/>
-  <rect x="150" y="386" width="212" height="8" rx="4" fill="#FFFFFF" opacity="0.6"/>
-</svg>
