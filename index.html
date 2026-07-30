@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suivi Financier ZS — Recettes &amp; Dépenses des Centres de Santé</title>
+<meta name="description" content="Collecte et tableau de bord des recettes et dépenses des centres de santé, par équipe et par centre.">
+<meta name="theme-color" content="#071A33">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.svg">
+<link rel="apple-touch-icon" href="icon-192.svg">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ========================= ECRAN INITIALISATION ========================= -->
+  <section id="setup-screen" class="screen setup-screen">
+    <div class="setup-card">
+      <h1>Configuration initiale</h1>
+      <p>Cette application utilise un <b>Google Sheet</b> comme base de données, via un script Google Apps Script déployé en tant qu'API. Collez ci-dessous l'URL de votre déploiement (se termine par <code>/exec</code>).</p>
+      <form id="setup-form">
+        <div class="field">
+          <label>URL de l'API Apps Script</label>
+          <input id="setup-url" type="url" placeholder="https://script.google.com/macros/s/AAAA.../exec" required>
+        </div>
+        <div class="login-error" id="setup-error"></div>
+        <button class="btn btn-primary" type="submit">Continuer</button>
+      </form>
+      <p style="margin-top:16px;font-size:12px;">La procédure complète de création du Google Sheet et du déploiement est détaillée dans le fichier <code>README.md</code> du projet.</p>
+
+      <div id="init-block" style="margin-top:22px;padding-top:18px;border-top:1px dashed var(--line-strong);display:none;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">Première utilisation ?</p>
+        <p style="font-size:12.5px;">Initialisez le Google Sheet : création des onglets, import des 35 centres de santé et création du compte administrateur.</p>
+        <div class="field"><label>Identifiant administrateur</label><input id="init-admin-id" value="admin"></div>
+        <div class="field"><label>Mot de passe administrateur</label><input id="init-admin-pw" value="admin123"></div>
+        <button class="btn btn-ghost" type="button" id="btn-init" style="width:100%;">Initialiser le Google Sheet</button>
+        <div class="login-error" id="init-error"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= ECRAN CONNEXION ========================= -->
+  <section id="login-screen" class="screen login-screen">
+    <div class="login-card">
+      <div class="login-stamp"><span>ZS<br>SANTÉ</span></div>
+      <p class="brand-eyebrow">Suivi Financier</p>
+      <h1>Recettes &amp; dépenses des centres de santé</h1>
+      <p class="subtitle">Connectez-vous avec les identifiants de votre équipe, ou en tant qu'administrateur.</p>
+      <form id="login-form">
+        <div class="field">
+          <label>Identifiant</label>
+          <input id="login-id" type="text" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <input id="login-pw" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="login-error" id="login-error"></div>
+        <button class="btn btn-primary" id="login-submit" type="submit">Se connecter</button>
+      </form>
+      <p class="login-footnote">Problème de connexion au serveur ? <button id="change-api-url" type="button">Changer l'URL de l'API</button></p>
+    </div>
+  </section>
+
+  <!-- ========================= ECRAN APPLICATION ========================= -->
+  <section id="app-screen" class="screen">
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <p class="sidebar-brand">Suivi Financier ZS</p>
+        <span class="sidebar-role" id="sidebar-role"></span>
+        <nav class="nav-group" id="sidebar-nav"></nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-user">
+          <p class="who" id="sidebar-user-name"></p>
+          <button class="sidebar-logout" data-action="logout">Se déconnecter</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="mobile-topbar">
+          <button class="hamburger" id="hamburger" aria-label="Ouvrir le menu">☰</button>
+          <span class="brand">Suivi Financier ZS</span>
+          <button class="sidebar-logout" style="width:auto;" data-action="logout">Quitter</button>
+        </div>
+        <div id="main-content"></div>
+      </main>
+    </div>
+  </section>
+
+  <div class="toast-stack" id="toast-stack"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="centres-seed.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+<script>
+  // Service worker temporairement désactivé + désinscription de toute
+  // version précédemment installée, pour éviter qu'un cache obsolète
+  // ne serve d'anciens fichiers pendant la mise au point de l'application.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((reg) => reg.unregister());
+    });
+    if (window.caches) {
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+    }
+  }
+</script>
+</body>
+</html>

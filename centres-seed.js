@@ -1,0 +1,43 @@
+/* ============================================================================
+   Référentiel des centres de santé — utilisé UNIQUEMENT pour l'initialisation
+   du Google Sheet (action "setup"), à partir du fichier fourni par l'utilisateur
+   (Formation_Sanitaires_Pub-ZS.xlsx). Après l'initialisation, ce fichier n'est
+   plus utilisé : le Google Sheet devient la seule source de vérité.
+============================================================================ */
+const CENTRES_SEED = [
+  { "id": "C001", "commune": "Abomey", "arrondissement": "Agbokpa", "nom": "Cs Agbokpa" },
+  { "id": "C002", "commune": "Abomey", "arrondissement": "Detohou Centre", "nom": "Cs Detohou" },
+  { "id": "C003", "commune": "Abomey", "arrondissement": "Detohou Centre", "nom": "Cs Tangandji" },
+  { "id": "C004", "commune": "Abomey", "arrondissement": "Djegbe", "nom": "Cs Djegbe" },
+  { "id": "C005", "commune": "Abomey", "arrondissement": "Hounli", "nom": "Cs Hounli" },
+  { "id": "C006", "commune": "Abomey", "arrondissement": "Sehoun", "nom": "Cs Sehoun" },
+  { "id": "C007", "commune": "Abomey", "arrondissement": "Vidole", "nom": "Cs Adandokpodji" },
+  { "id": "C008", "commune": "Abomey", "arrondissement": "Vidole", "nom": "Cs Vidole" },
+  { "id": "C009", "commune": "Abomey", "arrondissement": "Zounzounme", "nom": "Cs Zounzonme" },
+  { "id": "C010", "commune": "Agbangnizoun", "arrondissement": "Adanhondjigon", "nom": "Cs Adanhondjigon" },
+  { "id": "C011", "commune": "Agbangnizoun", "arrondissement": "Adingningon", "nom": "Cs Adingnigon" },
+  { "id": "C012", "commune": "Agbangnizoun", "arrondissement": "Agbangnizoun", "nom": "Cs Agbangnizoun" },
+  { "id": "C013", "commune": "Agbangnizoun", "arrondissement": "Kinta", "nom": "Cs Kinta" },
+  { "id": "C014", "commune": "Agbangnizoun", "arrondissement": "Kpota", "nom": "Cs Akodébakou" },
+  { "id": "C015", "commune": "Agbangnizoun", "arrondissement": "Kpota", "nom": "Cs Sinwe-Kpota" },
+  { "id": "C016", "commune": "Agbangnizoun", "arrondissement": "Lissazounme", "nom": "Cs Lissazounme" },
+  { "id": "C017", "commune": "Agbangnizoun", "arrondissement": "Sahe", "nom": "Cs Dovota" },
+  { "id": "C018", "commune": "Agbangnizoun", "arrondissement": "Sahe", "nom": "Cs Sahè" },
+  { "id": "C019", "commune": "Agbangnizoun", "arrondissement": "Sinwe", "nom": "Cs Sinwe" },
+  { "id": "C020", "commune": "Agbangnizoun", "arrondissement": "Tanvè", "nom": "Cs Tanve" },
+  { "id": "C021", "commune": "Agbangnizoun", "arrondissement": "Zoungoudo", "nom": "Cs Kpoto" },
+  { "id": "C022", "commune": "Djidja", "arrondissement": "Agondji", "nom": "Cs Agondji" },
+  { "id": "C023", "commune": "Djidja", "arrondissement": "Agouna", "nom": "Cs Agouna" },
+  { "id": "C024", "commune": "Djidja", "arrondissement": "Dan", "nom": "Cs Dan" },
+  { "id": "C025", "commune": "Djidja", "arrondissement": "Djidja Centre", "nom": "Cs Djidja" },
+  { "id": "C026", "commune": "Djidja", "arrondissement": "Dohouime", "nom": "Cs Dohouime" },
+  { "id": "C027", "commune": "Djidja", "arrondissement": "Gobaix", "nom": "Cs Gobaix" },
+  { "id": "C028", "commune": "Djidja", "arrondissement": "Houto", "nom": "Cs Outo" },
+  { "id": "C029", "commune": "Djidja", "arrondissement": "Monsourou", "nom": "Cs Lobeta" },
+  { "id": "C030", "commune": "Djidja", "arrondissement": "Monsourou", "nom": "Cs Monsourou" },
+  { "id": "C031", "commune": "Djidja", "arrondissement": "Mougnon", "nom": "Cs Mougnon" },
+  { "id": "C032", "commune": "Djidja", "arrondissement": "Oungbegame", "nom": "Cs Oumgbega" },
+  { "id": "C033", "commune": "Djidja", "arrondissement": "Setto", "nom": "Cs Saloudji" },
+  { "id": "C034", "commune": "Djidja", "arrondissement": "Setto", "nom": "Cs Setto" },
+  { "id": "C035", "commune": "Djidja", "arrondissement": "Zounkon", "nom": "Cs Ayogbé" }
+];
