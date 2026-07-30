@@ -1,15 +1,15 @@
 /* Service worker — met en cache la coquille de l'application (app shell) pour
    permettre l'installation en "application mobile" (PWA) et un chargement rapide.
    Les données elles-mêmes (Google Sheet) nécessitent toujours une connexion réseau. */
-const CACHE_NAME = 'zs-shell-v2';
+const CACHE_NAME = 'zs-shell-v3-flat';
 const SHELL_FILES = [
   './',
   './index.html',
-  './css/style.css',
-  './js/api.js',
-  './js/app.js',
-  './js/centres-seed.js',
-  './js/config.js',
+  './style.css',
+  './api.js',
+  './app.js',
+  './centres-seed.js',
+  './config.js',
   './manifest.json'
 ];
 
@@ -31,7 +31,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  // Ne jamais mettre en cache les appels à l'API Google Apps Script (données live)
   if (req.method !== 'GET' || req.url.includes('script.google.com')) return;
 
   event.respondWith(
