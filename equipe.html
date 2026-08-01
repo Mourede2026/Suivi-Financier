@@ -17,7 +17,6 @@
   </div>
   <div class="infos-session">
     <span id="indicateurReseau">● en ligne</span>
-    <a href="depenses.html" class="bouton-discret" style="color:var(--papier); border-color: rgba(244,239,224,0.3); text-decoration:none; display:inline-block;">Dépenses</a>
     <button class="bouton-discret" id="btnDeconnexion" style="color:var(--papier); border-color: rgba(244,239,224,0.3);">Déconnexion</button>
   </div>
 </header>
@@ -32,30 +31,222 @@
   <!-- ===================== ONGLET COLLECTE ===================== -->
   <section id="ongletCollecte">
 
-    <div class="fiche">
-      <div class="fiche-titre">
-        <h2 class="mb-0" style="font-size:1.1rem;">Période de collecte</h2>
-      </div>
-      <div class="grille-3" style="align-items:end;">
-        <div class="champ mb-0">
-          <label for="selecteurMois">Mois à collecter</label>
-          <input type="month" id="selecteurMois">
+    <!-- ---------- Vue 1 : liste des centres ---------- -->
+    <div id="vueListeCentres">
+      <div class="fiche">
+        <div class="fiche-titre">
+          <h2 class="mb-0" style="font-size:1.1rem;">Mes centres assignés</h2>
+          <span class="texte-discret" id="compteurCentres"></span>
         </div>
-        <div class="champ mb-0">
-          <button class="bouton-brass" id="btnOuvrirPeriode">Ouvrir cette période</button>
+        <div id="zoneFileAttente"></div>
+        <p class="texte-discret" style="margin-top:-6px;">Choisis un centre pour saisir ses recettes et ses dépenses, mois par mois.</p>
+        <div class="grille-centres" id="grilleCentres">
+          <p class="texte-discret">Chargement des centres...</p>
         </div>
-        <div class="champ mb-0" id="statutPeriode"></div>
       </div>
     </div>
 
-    <div class="fiche">
-      <div class="fiche-titre">
-        <h2 class="mb-0" style="font-size:1.1rem;">Mes centres assignés</h2>
-        <span class="texte-discret" id="compteurCentres"></span>
+    <!-- ---------- Vue 2 : panneau centre (période + onglets recettes/dépenses) ---------- -->
+    <div id="vuePanneauCentre" class="cache">
+      <button class="bouton-discret" id="btnRetourCentres" style="margin-bottom:14px;">← Tous les centres</button>
+
+      <div class="fiche">
+        <div class="fiche-titre">
+          <h2 class="mb-0" style="font-size:1.2rem;" id="titreCentrePanneau">Centre</h2>
+          <span class="eyebrow" id="communeCentrePanneau"></span>
+        </div>
+        <div class="grille-3" style="align-items:end;">
+          <div class="champ mb-0">
+            <label for="selecteurMois">Mois</label>
+            <input type="month" id="selecteurMois">
+          </div>
+          <div class="champ mb-0">
+            <button class="bouton-brass" id="btnOuvrirPeriode">Ouvrir cette période</button>
+          </div>
+          <div class="champ mb-0" id="statutPeriode"></div>
+        </div>
       </div>
-      <div id="zoneFileAttente"></div>
-      <div class="grille-centres" id="grilleCentres">
-        <p class="texte-discret">Chargement des centres...</p>
+
+      <div class="fiche">
+        <nav class="sous-onglets">
+          <button class="sous-onglet actif" data-sous-onglet="recettes">Recettes</button>
+          <button class="sous-onglet" data-sous-onglet="depense_medicament">Dépenses Médicament</button>
+          <button class="sous-onglet" data-sous-onglet="depense_fonctionnement">Dépenses Fonctionnement</button>
+        </nav>
+
+        <!-- ===== Panneau RECETTES ===== -->
+        <div id="panneauRecettes">
+          <div id="messageRecette"></div>
+
+          <form id="formRecette">
+            <div class="champ">
+              <label id="labelSoldeDebut">Solde début</label>
+              <input type="number" step="0.01" id="soldeDebut" required>
+              <p class="texte-discret" id="noteSoldeDebut" style="margin-top:4px; font-size:0.78rem;"></p>
+            </div>
+
+            <div class="grille-2">
+              <div class="champ">
+                <label>Recette réalisée (livre caisse-recette)</label>
+                <input type="number" step="0.01" id="recetteRealisee" required>
+              </div>
+              <div class="champ">
+                <label for="preuveRecetteRealisee">Preuve — recette réalisée</label>
+                <input type="file" id="preuveRecetteRealisee" accept="image/*" capture="environment">
+                <p class="texte-discret" id="apercuRecetteRealisee" style="margin-top:4px; font-size:0.78rem;"></p>
+              </div>
+
+              <div class="champ">
+                <label>Recette déclarée (maniford)</label>
+                <input type="number" step="0.01" id="recetteDeclaree" required>
+              </div>
+              <div class="champ">
+                <label for="preuveRecetteDeclaree">Preuve — recette déclarée</label>
+                <input type="file" id="preuveRecetteDeclaree" accept="image/*" capture="environment">
+                <p class="texte-discret" id="apercuRecetteDeclaree" style="margin-top:4px; font-size:0.78rem;"></p>
+              </div>
+
+              <div class="champ">
+                <label>Versement intégré</label>
+                <input type="number" step="0.01" id="versementIntegre" required>
+              </div>
+              <div class="champ">
+                <label for="preuveVersement">Preuve — versement intégré</label>
+                <input type="file" id="preuveVersement" accept="image/*" capture="environment">
+                <p class="texte-discret" id="apercuVersement" style="margin-top:4px; font-size:0.78rem;"></p>
+              </div>
+            </div>
+
+            <div class="champ">
+              <label>Valeur physique comptée en fin de mois</label>
+              <input type="number" step="0.01" id="valeurFinMois" required>
+            </div>
+
+            <div class="champ">
+              <label for="observationRecette">Observation</label>
+              <textarea id="observationRecette" rows="2" placeholder="Remarque éventuelle sur la recette de ce mois..."></textarea>
+            </div>
+
+            <div class="fiche" style="background:var(--blanc); box-shadow:none; border:1px solid var(--ligne); padding:16px; margin-bottom:16px;">
+              <div class="grille-2">
+                <div>
+                  <div class="eyebrow">Écart du mois (Recette totale − Versement)</div>
+                  <div id="valeurEcartMensuel" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
+                </div>
+                <div>
+                  <div class="eyebrow">Total non versé à ce jour (solde en caisse)</div>
+                  <div id="valeurSoldeCaisse" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
+                  <div class="texte-discret" id="comparaisonSoldeCaisse" style="font-size:0.78rem;"></div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerRecette">
+              Enregistrer la recette
+            </button>
+          </form>
+        </div>
+
+        <!-- ===== Panneau DÉPENSES MÉDICAMENT ===== -->
+        <div id="panneauDepenseMedicament" class="cache">
+          <div class="champ" style="max-width:320px;">
+            <label for="detteMedicament">Dette antérieure (Médicament) — pour ce centre</label>
+            <div class="flex-gap">
+              <input type="number" step="0.01" id="detteMedicament">
+              <button type="button" class="bouton-discret" id="btnEnregistrerDetteMedicament">Enregistrer</button>
+            </div>
+            <p class="texte-discret" id="messageDetteMedicament" style="margin-top:4px; font-size:0.78rem;"></p>
+          </div>
+
+          <div id="messageDepenseMedicament"></div>
+
+          <form id="formDepenseMed">
+            <div class="grille-2">
+              <div class="champ">
+                <label>Montant dépensé</label>
+                <input type="number" step="0.01" id="montantDepenseMed" required>
+              </div>
+              <div class="champ">
+                <label>Montant justifié</label>
+                <input type="number" step="0.01" id="montantJustifieMed">
+              </div>
+              <div class="champ">
+                <label>Date de la justification</label>
+                <input type="date" id="dateJustificationMed">
+              </div>
+              <div class="champ">
+                <label>Date d'achat au Dépôt Répartiteur</label>
+                <input type="date" id="dateAchatDepotMed">
+              </div>
+              <div class="champ" style="grid-column:1 / -1;">
+                <label>Montant BL eSIGL du Dépôt Répartiteur</label>
+                <input type="number" step="0.01" id="montantBlDepotMed">
+              </div>
+            </div>
+
+            <div class="champ">
+              <label for="observationDepenseMed">Observation</label>
+              <textarea id="observationDepenseMed" rows="2" placeholder="Remarque éventuelle sur cette dépense..."></textarea>
+            </div>
+
+            <div class="champ">
+              <label for="preuveDepenseMed">Preuve / justificatif (obligatoire à la 1ère saisie)</label>
+              <input type="file" id="preuveDepenseMed" accept="image/*" capture="environment">
+              <p class="texte-discret" id="apercuPreuveDepenseMed" style="margin-top:4px; font-size:0.78rem;"></p>
+            </div>
+
+            <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerDepenseMed">
+              Enregistrer la dépense — Médicament
+            </button>
+          </form>
+        </div>
+
+        <!-- ===== Panneau DÉPENSES FONCTIONNEMENT ===== -->
+        <div id="panneauDepenseFonctionnement" class="cache">
+          <div class="champ" style="max-width:320px;">
+            <label for="detteFonctionnement">Dette antérieure (Fonctionnement) — pour ce centre</label>
+            <div class="flex-gap">
+              <input type="number" step="0.01" id="detteFonctionnement">
+              <button type="button" class="bouton-discret" id="btnEnregistrerDetteFonctionnement">Enregistrer</button>
+            </div>
+            <p class="texte-discret" id="messageDetteFonctionnement" style="margin-top:4px; font-size:0.78rem;"></p>
+          </div>
+
+          <div id="messageDepenseFonctionnement"></div>
+
+          <form id="formDepenseFon">
+            <div class="grille-2">
+              <div class="champ">
+                <label>Montant dépensé</label>
+                <input type="number" step="0.01" id="montantDepenseFon" required>
+              </div>
+              <div class="champ">
+                <label>Montant justifié</label>
+                <input type="number" step="0.01" id="montantJustifieFon">
+              </div>
+              <div class="champ" style="grid-column:1 / -1;">
+                <label>Date de la justification</label>
+                <input type="date" id="dateJustificationFon">
+              </div>
+            </div>
+
+            <div class="champ">
+              <label for="observationDepenseFon">Observation</label>
+              <textarea id="observationDepenseFon" rows="2" placeholder="Remarque éventuelle sur cette dépense..."></textarea>
+            </div>
+
+            <div class="champ">
+              <label for="preuveDepenseFon">Preuve / justificatif (obligatoire à la 1ère saisie)</label>
+              <input type="file" id="preuveDepenseFon" accept="image/*" capture="environment">
+              <p class="texte-discret" id="apercuPreuveDepenseFon" style="margin-top:4px; font-size:0.78rem;"></p>
+            </div>
+
+            <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerDepenseFon">
+              Enregistrer la dépense — Fonctionnement
+            </button>
+          </form>
+        </div>
+
       </div>
     </div>
 
@@ -67,8 +258,27 @@
     <div class="rangee-stats" id="statsEquipe"></div>
 
     <div class="fiche">
+      <div class="fiche-titre flex-entre">
+        <h2 class="mb-0" style="font-size:1.1rem;">Vue combinée par centre</h2>
+        <select id="selecteurCentreDashboard" style="width:auto;"></select>
+      </div>
+      <p class="texte-discret" id="resumeVueCombinee"></p>
+      <div style="overflow-x:auto;">
+        <table id="tableCombinee">
+          <thead>
+            <tr>
+              <th>Mois</th><th>Recette du mois</th><th>Dépense Médicament</th>
+              <th>Dépense Fonctionnement</th><th>Écart net du mois</th><th>Solde recettes en caisse</th>
+            </tr>
+          </thead>
+          <tbody id="corpsTableCombinee"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fiche">
       <div class="fiche-titre">
-        <h2 class="mb-0" style="font-size:1.1rem;">Cohérence par mois et par centre</h2>
+        <h2 class="mb-0" style="font-size:1.1rem;">Cohérence des recettes par mois et par centre</h2>
       </div>
       <div style="overflow-x:auto;">
         <table id="tableDashboard">
@@ -87,82 +297,6 @@
 
 </div>
 
-<!-- ===================== MODALE DE SAISIE ===================== -->
-<div class="fond-modale cache" id="fondModale">
-  <div class="modale">
-    <div class="fiche-titre">
-      <h2 class="mb-0" style="font-size:1.15rem;" id="titreModale">Saisie</h2>
-      <button class="bouton-discret" id="btnFermerModale">Fermer</button>
-    </div>
-
-    <div id="messageModale"></div>
-
-    <form id="formSaisie">
-      <input type="hidden" id="centreIdActuel">
-      <div class="champ">
-        <label id="labelSoldeDebut">Solde début</label>
-        <input type="number" step="0.01" id="soldeDebut" required>
-        <p class="texte-discret" id="noteSoldeDebut" style="margin-top:4px; font-size:0.78rem;"></p>
-      </div>
-
-      <div class="grille-2">
-        <div class="champ">
-          <label>Recette réalisée (livre caisse-recette)</label>
-          <input type="number" step="0.01" id="recetteRealisee" required>
-        </div>
-        <div class="champ">
-          <label for="preuveRecetteRealisee">Preuve — recette réalisée</label>
-          <input type="file" id="preuveRecetteRealisee" accept="image/*" capture="environment">
-          <p class="texte-discret" id="apercuRecetteRealisee" style="margin-top:4px; font-size:0.78rem;"></p>
-        </div>
-
-        <div class="champ">
-          <label>Recette déclarée (maniford)</label>
-          <input type="number" step="0.01" id="recetteDeclaree" required>
-        </div>
-        <div class="champ">
-          <label for="preuveRecetteDeclaree">Preuve — recette déclarée</label>
-          <input type="file" id="preuveRecetteDeclaree" accept="image/*" capture="environment">
-          <p class="texte-discret" id="apercuRecetteDeclaree" style="margin-top:4px; font-size:0.78rem;"></p>
-        </div>
-
-        <div class="champ">
-          <label>Versement intégré</label>
-          <input type="number" step="0.01" id="versementIntegre" required>
-        </div>
-        <div class="champ">
-          <label for="preuveVersement">Preuve — versement intégré</label>
-          <input type="file" id="preuveVersement" accept="image/*" capture="environment">
-          <p class="texte-discret" id="apercuVersement" style="margin-top:4px; font-size:0.78rem;"></p>
-        </div>
-      </div>
-
-      <div class="champ">
-        <label>Valeur physique comptée en fin de mois</label>
-        <input type="number" step="0.01" id="valeurFinMois" required>
-      </div>
-
-      <div class="fiche" style="background:var(--blanc); box-shadow:none; border:1px solid var(--ligne); padding:16px; margin-bottom:16px;">
-        <div class="grille-2">
-          <div>
-            <div class="eyebrow">Écart du mois (Recette totale − Versement)</div>
-            <div id="valeurEcartMensuel" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
-          </div>
-          <div>
-            <div class="eyebrow">Total non versé à ce jour (solde en caisse)</div>
-            <div id="valeurSoldeCaisse" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
-            <div class="texte-discret" id="comparaisonSoldeCaisse" style="font-size:0.78rem;"></div>
-          </div>
-        </div>
-      </div>
-
-      <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerSaisie">
-        Enregistrer
-      </button>
-    </form>
-  </div>
-</div>
-
 <script src="js/config.js"></script>
 <script src="js/session.js"></script>
 <script src="js/api.js"></script>
@@ -170,8 +304,13 @@
   const session = Session.exigerRole('equipe');
   let centres = [];
   let collectesEquipe = [];
+  let depensesEquipe = [];
+  let dettesEquipe = [];
+  let selectedCentreId = null;
   let moisActif = moisActuel();
-  let preuves = { recette_realisee: null, recette_declaree: null, versement: null };
+  let preuvesRecette = { recette_realisee: null, recette_declaree: null, versement: null };
+  let preuveDepenseMedBase64 = null;
+  let preuveDepenseFonBase64 = null;
 
   if (session) {
     document.getElementById('nomEquipe').textContent = session.nom_equipe;
@@ -186,6 +325,7 @@
 
     await chargerCentres();
     await chargerCollectes();
+    await chargerDepenses();
     await FileAttente.synchroniser();
     majFileAttenteAffichage();
     afficherCentres();
@@ -206,21 +346,22 @@
   }
 
   async function chargerCentres() {
-    const resultat = await appelerApi('getCentresEquipe');
-    if (resultat.ok) centres = resultat.centres;
+    const r = await appelerApi('getCentresEquipe');
+    if (r.ok) centres = r.centres;
     document.getElementById('compteurCentres').textContent = centres.length + ' centre(s)';
   }
 
   async function chargerCollectes() {
-    const resultat = await appelerApi('getCollectesEquipe');
-    if (resultat.ok) collectesEquipe = resultat.collectes;
+    const r = await appelerApi('getCollectesEquipe');
+    if (r.ok) collectesEquipe = r.collectes;
   }
 
-  function statutCentrePourMois(centreId, mois) {
-    const c = collectesEquipe.find(x => x.centre_id === centreId && String(x.mois) === mois);
-    if (!c) return null;
-    return c.balance;
+  async function chargerDepenses() {
+    const r = await appelerApi('getDepensesEquipe');
+    if (r.ok) { depensesEquipe = r.depenses; dettesEquipe = r.dettes_initiales; }
   }
+
+  // ---------- Vue 1 : liste des centres ----------
 
   function afficherCentres() {
     const grille = document.getElementById('grilleCentres');
@@ -230,46 +371,88 @@
     }
 
     grille.innerHTML = centres.map(c => {
-      const statut = statutCentrePourMois(c.id, moisActif);
-      let tampon = '<span class="tampon tampon-attente">À faire</span>';
-      if (statut === 'Bon') tampon = '<span class="tampon tampon-bon">Bon</span>';
-      if (statut === 'Problème') tampon = '<span class="tampon tampon-probleme">Problème</span>';
+      const moisRenseignes = new Set(collectesEquipe.filter(x => x.centre_id === c.id).map(x => String(x.mois))).size;
+      const dernier = collectesEquipe.filter(x => x.centre_id === c.id).sort((a, b) => String(b.mois).localeCompare(String(a.mois)))[0];
+      let tampon = '<span class="tampon tampon-attente">Aucune saisie</span>';
+      if (dernier) tampon = `<span class="tampon ${dernier.balance === 'Bon' ? 'tampon-bon' : 'tampon-probleme'}">${formaterMois(dernier.mois)} : ${dernier.balance}</span>`;
 
       return `
         <div class="carte-centre" data-centre-id="${c.id}">
           <h3>${c.nom}</h3>
           <div class="commune">${c.commune} · ${c.arrondissement}</div>
+          <p class="texte-discret" style="margin:0 0 8px 0; font-size:0.78rem;">${moisRenseignes} mois renseigné(s)</p>
           ${tampon}
         </div>`;
     }).join('');
 
     grille.querySelectorAll('.carte-centre').forEach(carte => {
-      carte.addEventListener('click', () => ouvrirModale(carte.dataset.centreId));
+      carte.addEventListener('click', () => ouvrirPanneauCentre(carte.dataset.centreId));
     });
   }
 
-  document.getElementById('selecteurMois').addEventListener('change', async (e) => {
-    moisActif = e.target.value;
-    await chargerCollectes();
+  document.getElementById('btnRetourCentres').addEventListener('click', () => {
+    selectedCentreId = null;
+    document.getElementById('vuePanneauCentre').classList.add('cache');
+    document.getElementById('vueListeCentres').classList.remove('cache');
     afficherCentres();
+  });
+
+  // ---------- Vue 2 : panneau centre ----------
+
+  function ouvrirPanneauCentre(centreId) {
+    selectedCentreId = centreId;
+    const centre = centres.find(c => c.id === centreId);
+    document.getElementById('titreCentrePanneau').textContent = centre.nom;
+    document.getElementById('communeCentrePanneau').textContent = centre.commune + ' · ' + centre.arrondissement;
+    document.getElementById('selecteurMois').value = moisActif;
+    document.getElementById('statutPeriode').innerHTML = '';
+
+    document.getElementById('vueListeCentres').classList.add('cache');
+    document.getElementById('vuePanneauCentre').classList.remove('cache');
+
+    changerSousOnglet('recettes');
+    majPourMoisEtCentre();
+  }
+
+  document.getElementById('selecteurMois').addEventListener('change', (e) => {
+    moisActif = e.target.value;
+    document.getElementById('statutPeriode').innerHTML = '';
+    majPourMoisEtCentre();
   });
 
   document.getElementById('btnOuvrirPeriode').addEventListener('click', async () => {
     const btn = document.getElementById('btnOuvrirPeriode');
     btn.disabled = true;
-    const resultat = await appelerApi('ouvrirPeriode', { mois: moisActif });
+    const r = await appelerApi('ouvrirPeriode', { mois: moisActif });
     btn.disabled = false;
     const zone = document.getElementById('statutPeriode');
-    if (resultat.ok) {
-      zone.innerHTML = `<span class="tampon tampon-bon">${resultat.deja_ouverte ? 'Période déjà ouverte' : 'Période ouverte'}</span>`;
-      await chargerCollectes();
-      afficherCentres();
+    if (r.ok) {
+      zone.innerHTML = `<span class="tampon tampon-bon">${r.deja_ouverte ? 'Période déjà ouverte' : 'Période ouverte'}</span>`;
     } else {
-      zone.innerHTML = `<span class="texte-discret" style="color:var(--tampon-probleme)">${resultat.error}</span>`;
+      zone.innerHTML = `<span class="texte-discret" style="color:var(--tampon-probleme)">${r.error}</span>`;
     }
   });
 
-  // ---------- Modale de saisie ----------
+  function majPourMoisEtCentre() {
+    peuplerPanneauRecette();
+    peuplerPanneauDepense('Médicament');
+    peuplerPanneauDepense('Fonctionnement');
+  }
+
+  // ---------- Sous-onglets ----------
+
+  document.querySelectorAll('.sous-onglet').forEach(bouton => {
+    bouton.addEventListener('click', () => changerSousOnglet(bouton.dataset.sousOnglet));
+  });
+
+  function changerSousOnglet(cible) {
+    document.querySelectorAll('.sous-onglet').forEach(b => b.classList.toggle('actif', b.dataset.sousOnglet === cible));
+    document.getElementById('panneauRecettes').classList.toggle('cache', cible !== 'recettes');
+    document.getElementById('panneauDepenseMedicament').classList.toggle('cache', cible !== 'depense_medicament');
+    document.getElementById('panneauDepenseFonctionnement').classList.toggle('cache', cible !== 'depense_fonctionnement');
+  }
+
+  // ---------- Panneau Recettes ----------
 
   function moisPrecedentDe(mois) {
     let [annee, m] = mois.split('-').map(Number);
@@ -278,19 +461,14 @@
     return annee + '-' + String(m).padStart(2, '0');
   }
 
-  function ouvrirModale(centreId) {
-    const centre = centres.find(c => c.id === centreId);
-    document.getElementById('titreModale').textContent = centre.nom + ' — ' + formaterMois(moisActif);
-    document.getElementById('centreIdActuel').value = centreId;
-    document.getElementById('messageModale').innerHTML = '';
-    preuves = { recette_realisee: null, recette_declaree: null, versement: null };
+  function peuplerPanneauRecette() {
+    document.getElementById('messageRecette').innerHTML = '';
+    preuvesRecette = { recette_realisee: null, recette_declaree: null, versement: null };
     ['apercuRecetteRealisee', 'apercuRecetteDeclaree', 'apercuVersement'].forEach(id => document.getElementById(id).textContent = '');
-    document.getElementById('formSaisie').reset();
-    document.getElementById('centreIdActuel').value = centreId;
+    document.getElementById('formRecette').reset();
 
-    // Solde début : auto = solde fin du mois précédent pour ce centre, sinon saisie manuelle.
     const moisPrec = moisPrecedentDe(moisActif);
-    const precedente = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisPrec);
+    const precedente = collectesEquipe.find(c => c.centre_id === selectedCentreId && String(c.mois) === moisPrec);
     const champSolde = document.getElementById('soldeDebut');
     const noteSolde = document.getElementById('noteSoldeDebut');
 
@@ -306,21 +484,20 @@
       noteSolde.textContent = 'Aucune collecte le mois précédent pour ce centre — saisie manuelle (première période).';
     }
 
-    // Pré-remplit si une saisie existe déjà pour ce mois.
-    const existante = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisActif);
+    const existante = collectesEquipe.find(c => c.centre_id === selectedCentreId && String(c.mois) === moisActif);
     if (existante) {
       champSolde.value = existante.solde_debut;
       document.getElementById('recetteRealisee').value = existante.recette_realisee;
       document.getElementById('recetteDeclaree').value = existante.recette_declaree;
       document.getElementById('versementIntegre').value = existante.versement_integre;
       document.getElementById('valeurFinMois').value = existante.valeur_fin_mois;
+      document.getElementById('observationRecette').value = existante.observation || '';
       if (existante.preuve_recette_realisee) document.getElementById('apercuRecetteRealisee').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
       if (existante.preuve_recette_declaree) document.getElementById('apercuRecetteDeclaree').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
       if (existante.preuve_versement) document.getElementById('apercuVersement').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
     }
 
     majCalculEnDirect(precedente ? precedente.solde_fin_mois : null);
-    document.getElementById('fondModale').classList.remove('cache');
   }
 
   function majCalculEnDirect(soldeFinMoisPrecedent) {
@@ -345,15 +522,10 @@
 
   ['soldeDebut', 'recetteRealisee', 'versementIntegre'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
-      const centreId = document.getElementById('centreIdActuel').value;
       const moisPrec = moisPrecedentDe(moisActif);
-      const precedente = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisPrec);
+      const precedente = collectesEquipe.find(c => c.centre_id === selectedCentreId && String(c.mois) === moisPrec);
       majCalculEnDirect(precedente ? precedente.solde_fin_mois : null);
     });
-  });
-
-  document.getElementById('btnFermerModale').addEventListener('click', () => {
-    document.getElementById('fondModale').classList.add('cache');
   });
 
   function ecouterPreuve(idInput, cle, idApercu) {
@@ -362,7 +534,7 @@
       if (!fichier) return;
       const lecteur = new FileReader();
       lecteur.onload = () => {
-        preuves[cle] = lecteur.result;
+        preuvesRecette[cle] = lecteur.result;
         document.getElementById(idApercu).textContent = 'Photo prête : ' + fichier.name;
       };
       lecteur.readAsDataURL(fichier);
@@ -372,50 +544,156 @@
   ecouterPreuve('preuveRecetteDeclaree', 'recette_declaree', 'apercuRecetteDeclaree');
   ecouterPreuve('preuveVersement', 'versement', 'apercuVersement');
 
-  document.getElementById('formSaisie').addEventListener('submit', async (e) => {
+  document.getElementById('formRecette').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('btnEnregistrerSaisie');
+    const btn = document.getElementById('btnEnregistrerRecette');
     btn.disabled = true;
     btn.textContent = 'Enregistrement...';
 
     const donnees = {
-      centre_id: document.getElementById('centreIdActuel').value,
+      centre_id: selectedCentreId,
       mois: moisActif,
       solde_debut: document.getElementById('soldeDebut').value,
       recette_realisee: document.getElementById('recetteRealisee').value,
       recette_declaree: document.getElementById('recetteDeclaree').value,
       versement_integre: document.getElementById('versementIntegre').value,
       valeur_fin_mois: document.getElementById('valeurFinMois').value,
-      preuve_recette_realisee_base64: preuves.recette_realisee,
-      preuve_recette_declaree_base64: preuves.recette_declaree,
-      preuve_versement_base64: preuves.versement
+      observation: document.getElementById('observationRecette').value,
+      preuve_recette_realisee_base64: preuvesRecette.recette_realisee,
+      preuve_recette_declaree_base64: preuvesRecette.recette_declaree,
+      preuve_versement_base64: preuvesRecette.versement
     };
 
-    const resultat = await saveCollecteAvecRepli(donnees);
+    const r = await enregistrerAvecRepli('saveCollecte', donnees);
     btn.disabled = false;
-    btn.textContent = 'Enregistrer';
+    btn.textContent = 'Enregistrer la recette';
 
-    const zoneMsg = document.getElementById('messageModale');
-    if (!resultat.ok) {
-      zoneMsg.innerHTML = `<div class="message message-erreur">${resultat.error}</div>`;
-      return;
-    }
+    const zoneMsg = document.getElementById('messageRecette');
+    if (!r.ok) { zoneMsg.innerHTML = `<div class="message message-erreur">${r.error}</div>`; return; }
 
     majFileAttenteAffichage();
-
-    if (resultat.horsLigne) {
+    if (r.horsLigne) {
       zoneMsg.innerHTML = `<div class="message message-erreur">Pas de réseau : saisie mise en attente, elle sera envoyée automatiquement.</div>`;
-      setTimeout(() => document.getElementById('fondModale').classList.add('cache'), 1600);
       return;
     }
 
-    zoneMsg.innerHTML = `<div class="message message-succes">Enregistré — statut : ${resultat.balance}</div>`;
+    zoneMsg.innerHTML = `<div class="message message-succes">Enregistré — statut : ${r.balance}</div>`;
     await chargerCollectes();
-    afficherCentres();
-    setTimeout(() => document.getElementById('fondModale').classList.add('cache'), 900);
+    peuplerPanneauRecette();
   });
 
-  // ---------- Onglets ----------
+  // ---------- Panneaux Dépenses (Médicament / Fonctionnement) ----------
+
+  const CONFIG_COMPTES = {
+    'Médicament': {
+      suffixe: 'Med', champDette: 'detteMedicament', btnDette: 'btnEnregistrerDetteMedicament', msgDette: 'messageDetteMedicament'
+    },
+    'Fonctionnement': {
+      suffixe: 'Fon', champDette: 'detteFonctionnement', btnDette: 'btnEnregistrerDetteFonctionnement', msgDette: 'messageDetteFonctionnement'
+    }
+  };
+
+  function peuplerPanneauDepense(compte) {
+    const cfg = CONFIG_COMPTES[compte];
+    const s = cfg.suffixe;
+
+    const dette = dettesEquipe.find(d => d.centre_id === selectedCentreId && d.compte === compte);
+    document.getElementById(cfg.champDette).value = dette ? dette.montant : 0;
+    document.getElementById(cfg.msgDette).textContent = '';
+
+    document.getElementById('message' + (compte === 'Médicament' ? 'DepenseMedicament' : 'DepenseFonctionnement')).innerHTML = '';
+    if (compte === 'Médicament') preuveDepenseMedBase64 = null; else preuveDepenseFonBase64 = null;
+    document.getElementById('apercuPreuveDepense' + s).textContent = '';
+    document.getElementById('formDepense' + s).reset();
+
+    const existante = depensesEquipe.find(d => d.centre_id === selectedCentreId && String(d.mois) === moisActif && d.compte === compte);
+    if (existante) {
+      document.getElementById('montantDepense' + s).value = existante.montant_depense;
+      document.getElementById('montantJustifie' + s).value = existante.montant_justifie;
+      document.getElementById('dateJustification' + s).value = existante.date_justification || '';
+      document.getElementById('observationDepense' + s).value = existante.observation || '';
+      if (compte === 'Médicament') {
+        document.getElementById('dateAchatDepotMed').value = existante.date_achat_depot || '';
+        document.getElementById('montantBlDepotMed').value = existante.montant_bl_depot || '';
+      }
+      if (existante.preuve_url) document.getElementById('apercuPreuveDepense' + s).textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
+    }
+  }
+
+  function ecouterPreuveDepense(idInput, compte, idApercu) {
+    document.getElementById(idInput).addEventListener('change', (e) => {
+      const fichier = e.target.files[0];
+      if (!fichier) return;
+      const lecteur = new FileReader();
+      lecteur.onload = () => {
+        if (compte === 'Médicament') preuveDepenseMedBase64 = lecteur.result; else preuveDepenseFonBase64 = lecteur.result;
+        document.getElementById(idApercu).textContent = 'Photo prête : ' + fichier.name;
+      };
+      lecteur.readAsDataURL(fichier);
+    });
+  }
+  ecouterPreuveDepense('preuveDepenseMed', 'Médicament', 'apercuPreuveDepenseMed');
+  ecouterPreuveDepense('preuveDepenseFon', 'Fonctionnement', 'apercuPreuveDepenseFon');
+
+  async function soumettreDepense(compte) {
+    const cfg = CONFIG_COMPTES[compte];
+    const s = cfg.suffixe;
+    const idBtn = 'btnEnregistrerDepense' + s;
+    const idMsg = 'message' + (compte === 'Médicament' ? 'DepenseMedicament' : 'DepenseFonctionnement');
+    const btn = document.getElementById(idBtn);
+    btn.disabled = true;
+    const libelleOriginal = btn.textContent;
+    btn.textContent = 'Enregistrement...';
+
+    const donnees = {
+      centre_id: selectedCentreId,
+      mois: moisActif,
+      compte: compte,
+      montant_depense: document.getElementById('montantDepense' + s).value,
+      montant_justifie: document.getElementById('montantJustifie' + s).value,
+      date_justification: document.getElementById('dateJustification' + s).value,
+      observation: document.getElementById('observationDepense' + s).value,
+      preuve_base64: compte === 'Médicament' ? preuveDepenseMedBase64 : preuveDepenseFonBase64
+    };
+    if (compte === 'Médicament') {
+      donnees.date_achat_depot = document.getElementById('dateAchatDepotMed').value;
+      donnees.montant_bl_depot = document.getElementById('montantBlDepotMed').value;
+    }
+
+    const r = await enregistrerAvecRepli('saveDepense', donnees);
+    btn.disabled = false;
+    btn.textContent = libelleOriginal;
+
+    const zoneMsg = document.getElementById(idMsg);
+    if (!r.ok) { zoneMsg.innerHTML = `<div class="message message-erreur">${r.error}</div>`; return; }
+
+    majFileAttenteAffichage();
+    if (r.horsLigne) {
+      zoneMsg.innerHTML = `<div class="message message-erreur">Pas de réseau : saisie mise en attente, elle sera envoyée automatiquement.</div>`;
+      return;
+    }
+
+    zoneMsg.innerHTML = `<div class="message message-succes">Dépense enregistrée.</div>`;
+    await chargerDepenses();
+    peuplerPanneauDepense(compte);
+  }
+
+  document.getElementById('formDepenseMed').addEventListener('submit', (e) => { e.preventDefault(); soumettreDepense('Médicament'); });
+  document.getElementById('formDepenseFon').addEventListener('submit', (e) => { e.preventDefault(); soumettreDepense('Fonctionnement'); });
+
+  async function enregistrerDette(compte) {
+    const cfg = CONFIG_COMPTES[compte];
+    const montant = document.getElementById(cfg.champDette).value;
+    const r = await appelerApi('setDetteInitiale', { centre_id: selectedCentreId, compte, montant });
+    const zone = document.getElementById(cfg.msgDette);
+    zone.textContent = r.ok ? 'Enregistré.' : r.error;
+    zone.style.color = r.ok ? 'var(--tampon-bon)' : 'var(--tampon-probleme)';
+    await chargerDepenses();
+  }
+  document.getElementById('btnEnregistrerDetteMedicament').addEventListener('click', () => enregistrerDette('Médicament'));
+  document.getElementById('btnEnregistrerDetteFonctionnement').addEventListener('click', () => enregistrerDette('Fonctionnement'));
+
+  // ---------- Onglets principaux ----------
 
   document.querySelectorAll('.onglet').forEach(bouton => {
     bouton.addEventListener('click', async () => {
@@ -430,20 +708,36 @@
 
   async function afficherDashboard() {
     await chargerCollectes();
+    await chargerDepenses();
 
-    const total = collectesEquipe.length;
+    // --- Statistiques globales ---
+    const totalSaisies = collectesEquipe.length;
     const bons = collectesEquipe.filter(c => c.balance === 'Bon').length;
-    const problemes = total - bons;
+    const totalRecettes = collectesEquipe.reduce((s, c) => s + (Number(c.recette_realisee) || 0), 0);
+    const totalDepenses = depensesEquipe.reduce((s, d) => s + (Number(d.montant_depense) || 0), 0);
+    const totalJustifie = depensesEquipe.reduce((s, d) => s + (Number(d.montant_justifie) || 0), 0);
+    const tauxCoherence = totalSaisies > 0 ? Math.round((bons / totalSaisies) * 100) : 0;
+    const tauxJustification = totalDepenses > 0 ? Math.round((totalJustifie / totalDepenses) * 100) : 0;
+    const soldeNet = totalRecettes - totalDepenses;
 
     document.getElementById('statsEquipe').innerHTML = `
-      <div class="stat"><div class="valeur">${total}</div><div class="libelle">Saisies au total</div></div>
-      <div class="stat"><div class="valeur" style="color:var(--tampon-bon)">${bons}</div><div class="libelle">Statut Bon</div></div>
-      <div class="stat"><div class="valeur" style="color:var(--tampon-probleme)">${problemes}</div><div class="libelle">Statut Problème</div></div>
+      <div class="stat"><div class="valeur">${totalRecettes.toLocaleString('fr-FR')}</div><div class="libelle">Total recettes réalisées</div></div>
+      <div class="stat"><div class="valeur">${totalDepenses.toLocaleString('fr-FR')}</div><div class="libelle">Total dépenses</div></div>
+      <div class="stat"><div class="valeur" style="color:${soldeNet>=0?'var(--tampon-bon)':'var(--tampon-probleme)'}">${soldeNet.toLocaleString('fr-FR')}</div><div class="libelle">Solde net (recettes − dépenses)</div></div>
+      <div class="stat"><div class="valeur" style="color:${tauxCoherence>=80?'var(--tampon-bon)':'var(--tampon-probleme)'}">${tauxCoherence}%</div><div class="libelle">Taux de cohérence recettes</div></div>
+      <div class="stat"><div class="valeur" style="color:${tauxJustification>=80?'var(--tampon-bon)':'var(--tampon-probleme)'}">${tauxJustification}%</div><div class="libelle">Taux de justification dépenses</div></div>
     `;
 
+    // --- Sélecteur de centre pour la vue combinée ---
+    const selecteur = document.getElementById('selecteurCentreDashboard');
+    const centrePrecedent = selecteur.value;
+    selecteur.innerHTML = centres.map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+    if (centrePrecedent && centres.some(c => c.id === centrePrecedent)) selecteur.value = centrePrecedent;
+    afficherVueCombinee();
+
+    // --- Table de cohérence des recettes ---
     const centreParId = {};
     centres.forEach(c => centreParId[c.id] = c);
-
     const lignes = [...collectesEquipe].sort((a, b) => String(b.mois).localeCompare(String(a.mois)));
 
     document.getElementById('corpsTableDashboard').innerHTML = lignes.map(c => {
@@ -462,6 +756,82 @@
     }).join('') || '<tr><td colspan="8" class="texte texte-discret">Aucune saisie pour l\'instant.</td></tr>';
   }
 
+  document.getElementById('selecteurCentreDashboard').addEventListener('change', afficherVueCombinee);
+
+  function afficherVueCombinee() {
+    const centreId = document.getElementById('selecteurCentreDashboard').value;
+    if (!centreId) return;
+
+    const collectesCentre = collectesEquipe.filter(c => c.centre_id === centreId).sort((a, b) => String(a.mois).localeCompare(String(b.mois)));
+    const depensesCentre = depensesEquipe.filter(d => d.centre_id === centreId);
+
+    const moisSet = new Set([...collectesCentre.map(c => String(c.mois)), ...depensesCentre.map(d => String(d.mois))]);
+    const moisListe = [...moisSet].sort();
+
+    const resume = document.getElementById('resumeVueCombinee');
+    if (moisListe.length === 0) {
+      resume.textContent = 'Aucune donnée saisie pour ce centre pour le moment.';
+      document.getElementById('corpsTableCombinee').innerHTML = '<tr><td colspan="6" class="texte texte-discret">Aucune donnée.</td></tr>';
+      return;
+    }
+
+    const collecteParMois = {};
+    collectesCentre.forEach(c => collecteParMois[String(c.mois)] = c);
+    const depenseMedParMois = {};
+    const depenseFonParMois = {};
+    depensesCentre.forEach(d => {
+      if (d.compte === 'Médicament') depenseMedParMois[String(d.mois)] = d;
+      else depenseFonParMois[String(d.mois)] = d;
+    });
+
+    const soldeDebutPeriode = collecteParMois[moisListe[0]] ? Number(collecteParMois[moisListe[0]].solde_debut) || 0 : null;
+    const dernierMoisAvecRecette = [...moisListe].reverse().find(m => collecteParMois[m]);
+    const soldeFinPeriode = dernierMoisAvecRecette ? Number(collecteParMois[dernierMoisAvecRecette].solde_fin_mois) || 0 : null;
+
+    resume.textContent = soldeDebutPeriode !== null
+      ? `Solde recettes en caisse : ${soldeDebutPeriode.toLocaleString('fr-FR')} en début de période → ${soldeFinPeriode.toLocaleString('fr-FR')} au dernier mois évalué (${formaterMois(dernierMoisAvecRecette)}).`
+      : 'Pas encore de recette saisie pour ce centre — seules les dépenses apparaissent ci-dessous.';
+
+    let totalRecette = 0, totalDepMed = 0, totalDepFon = 0;
+
+    const lignesHtml = moisListe.map(mois => {
+      const c = collecteParMois[mois];
+      const dMed = depenseMedParMois[mois];
+      const dFon = depenseFonParMois[mois];
+      const recette = c ? Number(c.recette_realisee) || 0 : 0;
+      const depMed = dMed ? Number(dMed.montant_depense) || 0 : 0;
+      const depFon = dFon ? Number(dFon.montant_depense) || 0 : 0;
+      totalRecette += recette; totalDepMed += depMed; totalDepFon += depFon;
+      const ecartNet = recette - depMed - depFon;
+      return `<tr>
+        <td>${formaterMois(mois)}</td>
+        <td>${c ? recette.toLocaleString('fr-FR') : '—'}</td>
+        <td>${dMed ? depMed.toLocaleString('fr-FR') : '—'}</td>
+        <td>${dFon ? depFon.toLocaleString('fr-FR') : '—'}</td>
+        <td style="color:${ecartNet>=0?'var(--tampon-bon)':'var(--tampon-probleme)'}">${ecartNet.toLocaleString('fr-FR')}</td>
+        <td>${c ? Number(c.solde_fin_mois).toLocaleString('fr-FR') : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    const ecartTotal = totalRecette - totalDepMed - totalDepFon;
+    const ligneDebut = soldeDebutPeriode !== null
+      ? `<tr style="background:rgba(199,154,62,0.08); font-weight:600;"><td class="texte">Solde début période</td><td colspan="5">${soldeDebutPeriode.toLocaleString('fr-FR')}</td></tr>`
+      : '';
+    const ligneTotal = `<tr style="font-weight:600; border-top:2px solid var(--encre);">
+        <td class="texte">Total période</td>
+        <td>${totalRecette.toLocaleString('fr-FR')}</td>
+        <td>${totalDepMed.toLocaleString('fr-FR')}</td>
+        <td>${totalDepFon.toLocaleString('fr-FR')}</td>
+        <td style="color:${ecartTotal>=0?'var(--tampon-bon)':'var(--tampon-probleme)'}">${ecartTotal.toLocaleString('fr-FR')}</td>
+        <td>—</td>
+      </tr>`;
+    const ligneFin = soldeFinPeriode !== null
+      ? `<tr style="background:rgba(199,154,62,0.08); font-weight:600;"><td class="texte">Solde fin période (dernier mois évalué)</td><td colspan="5">${soldeFinPeriode.toLocaleString('fr-FR')}</td></tr>`
+      : '';
+
+    document.getElementById('corpsTableCombinee').innerHTML = ligneDebut + lignesHtml + ligneTotal + ligneFin;
+  }
+
   // ---------- Déconnexion ----------
 
   document.getElementById('btnDeconnexion').addEventListener('click', async () => {
@@ -470,7 +840,6 @@
     window.location.href = 'index.html';
   });
 </script>
-
 
 <script>
   if ('serviceWorker' in navigator) {
