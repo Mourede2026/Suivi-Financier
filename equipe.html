@@ -28,6 +28,8 @@
 
 <div class="conteneur">
 
+  <div id="zoneAlerteGlobale"></div>
+
   <!-- ===================== ONGLET COLLECTE ===================== -->
   <section id="ongletCollecte">
 
@@ -345,20 +347,31 @@
       : '';
   }
 
+  function afficherAlerte(message) {
+    document.getElementById('zoneAlerteGlobale').innerHTML =
+      `<div class="message message-erreur">${message} — essaie de te déconnecter puis de te reconnecter. Si ça persiste, préviens l'administrateur.</div>`;
+  }
+  function effacerAlerte() {
+    document.getElementById('zoneAlerteGlobale').innerHTML = '';
+  }
+
   async function chargerCentres() {
     const r = await appelerApi('getCentresEquipe');
-    if (r.ok) centres = r.centres;
+    if (r.ok) { centres = r.centres; effacerAlerte(); }
+    else afficherAlerte('Impossible de charger tes centres (' + (r.error || 'erreur inconnue') + ')');
     document.getElementById('compteurCentres').textContent = centres.length + ' centre(s)';
   }
 
   async function chargerCollectes() {
     const r = await appelerApi('getCollectesEquipe');
-    if (r.ok) collectesEquipe = r.collectes;
+    if (r.ok) { collectesEquipe = r.collectes; effacerAlerte(); }
+    else afficherAlerte('Impossible de charger tes recettes (' + (r.error || 'erreur inconnue') + ')');
   }
 
   async function chargerDepenses() {
     const r = await appelerApi('getDepensesEquipe');
-    if (r.ok) { depensesEquipe = r.depenses; dettesEquipe = r.dettes_initiales; }
+    if (r.ok) { depensesEquipe = r.depenses; dettesEquipe = r.dettes_initiales; effacerAlerte(); }
+    else afficherAlerte('Impossible de charger tes dépenses (' + (r.error || 'erreur inconnue') + ')');
   }
 
   // ---------- Vue 1 : liste des centres ----------
