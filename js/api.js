@@ -70,16 +70,16 @@ const FileAttente = {
 // Tente une synchronisation automatique au retour de connexion.
 window.addEventListener('online', () => { FileAttente.synchroniser(); });
 
-/** Enregistre une collecte, avec repli sur la file d'attente si hors-ligne. */
-async function saveCollecteAvecRepli(donnees) {
+/** Enregistre une action avec repli sur la file d'attente si hors-ligne (saveCollecte, saveDepense...). */
+async function enregistrerAvecRepli(action, donnees) {
   if (!navigator.onLine) {
-    FileAttente.ajouter('saveCollecte', donnees);
+    FileAttente.ajouter(action, donnees);
     return { ok: true, horsLigne: true };
   }
 
-  const resultat = await appelerApi('saveCollecte', donnees);
+  const resultat = await appelerApi(action, donnees);
   if (!resultat.ok && resultat.horsLigne) {
-    FileAttente.ajouter('saveCollecte', donnees);
+    FileAttente.ajouter(action, donnees);
     return { ok: true, horsLigne: true };
   }
   return resultat;
