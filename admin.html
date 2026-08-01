@@ -25,6 +25,7 @@
   <button class="onglet" data-onglet="equipes">Équipes</button>
   <button class="onglet" data-onglet="assignation">Assignation des centres</button>
   <button class="onglet" data-onglet="donnees">Données</button>
+  <button class="onglet" data-onglet="depenses">Dépenses</button>
 </nav>
 
 <div class="conteneur">
@@ -118,10 +119,36 @@
           <thead>
             <tr>
               <th class="texte">Équipe</th><th class="texte">Centre</th><th class="texte">Commune</th><th>Mois</th>
-              <th>Écart</th><th>Écart vers.</th><th>Statut</th><th class="texte">Preuve</th>
+              <th>Écart</th><th>Écart vers.</th><th>Écart mensuel</th><th>Solde en caisse</th><th>Statut</th><th class="texte">Preuves</th>
             </tr>
           </thead>
           <tbody id="corpsDonnees"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DÉPENSES (vue admin) ===================== -->
+  <section id="ongletDepenses" class="cache">
+    <div class="fiche">
+      <div class="fiche-titre flex-entre">
+        <h2 class="mb-0" style="font-size:1.1rem;">Toutes les dépenses</h2>
+        <select id="filtreCompteDepenses" style="width:auto;">
+          <option value="">Tous comptes</option>
+          <option value="Médicament">Médicament</option>
+          <option value="Fonctionnement">Fonctionnement</option>
+        </select>
+      </div>
+      <div class="rangee-stats" id="statsDepensesAdmin"></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th class="texte">Équipe</th><th class="texte">Compte</th><th>Date dépense</th><th>Montant</th>
+              <th>Date justif.</th><th>Montant justifié</th><th>BL dépôt</th><th class="texte">Preuve</th>
+            </tr>
+          </thead>
+          <tbody id="corpsDepensesAdmin"></tbody>
         </table>
       </div>
     </div>
@@ -152,16 +179,17 @@
       document.querySelectorAll('.onglet').forEach(b => b.classList.remove('actif'));
       bouton.classList.add('actif');
       const cible = bouton.dataset.onglet;
-      ['Dashboard', 'Equipes', 'Assignation', 'Donnees'].forEach(id => {
+      ['Dashboard', 'Equipes', 'Assignation', 'Donnees', 'Depenses'].forEach(id => {
         document.getElementById('onglet' + id).classList.toggle('cache', 'onglet' + id !== 'onglet' + capitaliser(cible));
       });
       if (cible === 'dashboard') await afficherDashboard();
       if (cible === 'donnees') await afficherDonnees();
       if (cible === 'assignation') await chargerEtAfficherAssignation();
+      if (cible === 'depenses') await afficherDepensesAdmin();
     });
   });
   function capitaliser(s) {
-    const table = { dashboard: 'Dashboard', equipes: 'Equipes', assignation: 'Assignation', donnees: 'Donnees' };
+    const table = { dashboard: 'Dashboard', equipes: 'Equipes', assignation: 'Assignation', donnees: 'Donnees', depenses: 'Depenses' };
     return table[s];
   }
 
@@ -339,22 +367,74 @@
       (!commune || c.commune === commune) && (!statut || c.balance === statut)
     );
 
-    document.getElementById('corpsDonnees').innerHTML = filtrees.map(c => `
-      <tr>
+    document.getElementById('corpsDonnees').innerHTML = filtrees.map(c => {
+      const preuves = [
+        c.preuve_recette_realisee ? `<a href="${c.preuve_recette_realisee}" target="_blank" rel="noopener">Réalisée</a>` : '',
+        c.preuve_recette_declaree ? `<a href="${c.preuve_recette_declaree}" target="_blank" rel="noopener">Déclarée</a>` : '',
+        c.preuve_versement ? `<a href="${c.preuve_versement}" target="_blank" rel="noopener">Versement</a>` : ''
+      ].filter(Boolean).join(' · ') || '—';
+      return `<tr>
         <td class="texte">${c.nom_equipe}</td>
         <td class="texte">${c.nom_centre}</td>
         <td class="texte">${c.commune}</td>
         <td>${formaterMois(c.mois)}</td>
         <td>${c.ecart}</td>
         <td>${c.ecart_versement}</td>
+        <td>${c.ecart_mensuel}</td>
+        <td>${c.solde_fin_mois}</td>
         <td><span class="tampon ${c.balance === 'Bon' ? 'tampon-bon' : 'tampon-probleme'}">${c.balance}</span></td>
-        <td class="texte">${c.preuve_url ? `<a href="${c.preuve_url}" target="_blank" rel="noopener">Voir</a>` : '—'}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="8" class="texte texte-discret">Aucune donnée.</td></tr>';
+        <td class="texte">${preuves}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="10" class="texte texte-discret">Aucune donnée.</td></tr>';
   }
 
   document.getElementById('filtreCommune').addEventListener('change', dessinerTableDonnees);
   document.getElementById('filtreStatut').addEventListener('change', dessinerTableDonnees);
+
+  // ---------- Dépenses (vue admin) ----------
+  let toutesDepensesAdmin = [];
+  let toutesDettesAdmin = [];
+
+  async function afficherDepensesAdmin() {
+    const r = await appelerApi('adminGetToutesDepenses');
+    if (!r.ok) return;
+    toutesDepensesAdmin = r.depenses;
+    toutesDettesAdmin = r.dettes_initiales;
+    dessinerDepensesAdmin();
+  }
+
+  function dessinerDepensesAdmin() {
+    const compte = document.getElementById('filtreCompteDepenses').value;
+    const filtrees = toutesDepensesAdmin.filter(d => !compte || d.compte === compte);
+
+    const totalDepense = filtrees.reduce((s, d) => s + (Number(d.montant_depense) || 0), 0);
+    const totalJustifie = filtrees.reduce((s, d) => s + (Number(d.montant_justifie) || 0), 0);
+    const totalDette = toutesDettesAdmin.filter(d => !compte || d.compte === compte).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+    const ecart = (totalDette + totalDepense) - totalJustifie;
+
+    document.getElementById('statsDepensesAdmin').innerHTML = `
+      <div class="stat"><div class="valeur">${totalDepense.toLocaleString('fr-FR')}</div><div class="libelle">Total dépensé</div></div>
+      <div class="stat"><div class="valeur">${totalJustifie.toLocaleString('fr-FR')}</div><div class="libelle">Total justifié</div></div>
+      <div class="stat"><div class="valeur" style="color:${ecart===0?'var(--tampon-bon)':'var(--tampon-probleme)'}">${ecart.toLocaleString('fr-FR')}</div><div class="libelle">Écart (dette + dépenses − justifié)</div></div>
+    `;
+
+    document.getElementById('corpsDepensesAdmin').innerHTML = [...filtrees]
+      .sort((a, b) => String(b.date_depense).localeCompare(String(a.date_depense)))
+      .map(d => `
+        <tr>
+          <td class="texte">${d.nom_equipe}</td>
+          <td class="texte">${d.compte}</td>
+          <td>${d.date_depense || ''}</td>
+          <td>${Number(d.montant_depense||0).toLocaleString('fr-FR')}</td>
+          <td>${d.date_justification || ''}</td>
+          <td>${Number(d.montant_justifie||0).toLocaleString('fr-FR')}</td>
+          <td>${Number(d.montant_bl_depot||0).toLocaleString('fr-FR')}</td>
+          <td class="texte">${d.preuve_url ? `<a href="${d.preuve_url}" target="_blank" rel="noopener">Voir</a>` : '—'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="8" class="texte texte-discret">Aucune dépense.</td></tr>';
+  }
+
+  document.getElementById('filtreCompteDepenses').addEventListener('change', dessinerDepensesAdmin);
 
   // ---------- Déconnexion ----------
   document.getElementById('btnDeconnexion').addEventListener('click', async () => {

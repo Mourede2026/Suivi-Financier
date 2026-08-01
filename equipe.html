@@ -17,6 +17,7 @@
   </div>
   <div class="infos-session">
     <span id="indicateurReseau">● en ligne</span>
+    <a href="depenses.html" class="bouton-discret" style="color:var(--papier); border-color: rgba(244,239,224,0.3); text-decoration:none; display:inline-block;">Dépenses</a>
     <button class="bouton-discret" id="btnDeconnexion" style="color:var(--papier); border-color: rgba(244,239,224,0.3);">Déconnexion</button>
   </div>
 </header>
@@ -74,7 +75,7 @@
           <thead>
             <tr>
               <th>Mois</th><th class="texte">Centre</th><th class="texte">Commune</th>
-              <th>Écart</th><th>Écart versement</th><th>Statut</th>
+              <th>Écart</th><th>Écart versement</th><th>Écart mensuel</th><th>Solde en caisse</th><th>Statut</th>
             </tr>
           </thead>
           <tbody id="corpsTableDashboard"></tbody>
@@ -98,33 +99,61 @@
 
     <form id="formSaisie">
       <input type="hidden" id="centreIdActuel">
+      <div class="champ">
+        <label id="labelSoldeDebut">Solde début</label>
+        <input type="number" step="0.01" id="soldeDebut" required>
+        <p class="texte-discret" id="noteSoldeDebut" style="margin-top:4px; font-size:0.78rem;"></p>
+      </div>
+
       <div class="grille-2">
-        <div class="champ">
-          <label>Solde début</label>
-          <input type="number" step="0.01" id="soldeDebut" required>
-        </div>
         <div class="champ">
           <label>Recette réalisée (livre caisse-recette)</label>
           <input type="number" step="0.01" id="recetteRealisee" required>
         </div>
         <div class="champ">
+          <label for="preuveRecetteRealisee">Preuve — recette réalisée</label>
+          <input type="file" id="preuveRecetteRealisee" accept="image/*" capture="environment">
+          <p class="texte-discret" id="apercuRecetteRealisee" style="margin-top:4px; font-size:0.78rem;"></p>
+        </div>
+
+        <div class="champ">
           <label>Recette déclarée (maniford)</label>
           <input type="number" step="0.01" id="recetteDeclaree" required>
         </div>
         <div class="champ">
+          <label for="preuveRecetteDeclaree">Preuve — recette déclarée</label>
+          <input type="file" id="preuveRecetteDeclaree" accept="image/*" capture="environment">
+          <p class="texte-discret" id="apercuRecetteDeclaree" style="margin-top:4px; font-size:0.78rem;"></p>
+        </div>
+
+        <div class="champ">
           <label>Versement intégré</label>
           <input type="number" step="0.01" id="versementIntegre" required>
         </div>
-        <div class="champ" style="grid-column: 1 / -1;">
-          <label>Valeur physique comptée en fin de mois</label>
-          <input type="number" step="0.01" id="valeurFinMois" required>
+        <div class="champ">
+          <label for="preuveVersement">Preuve — versement intégré</label>
+          <input type="file" id="preuveVersement" accept="image/*" capture="environment">
+          <p class="texte-discret" id="apercuVersement" style="margin-top:4px; font-size:0.78rem;"></p>
         </div>
       </div>
 
       <div class="champ">
-        <label for="preuvePhoto">Preuve à l'appui (photo du livre de caisse)</label>
-        <input type="file" id="preuvePhoto" accept="image/*" capture="environment">
-        <p class="texte-discret" id="apercuFichier" style="margin-top:6px;"></p>
+        <label>Valeur physique comptée en fin de mois</label>
+        <input type="number" step="0.01" id="valeurFinMois" required>
+      </div>
+
+      <div class="fiche" style="background:var(--blanc); box-shadow:none; border:1px solid var(--ligne); padding:16px; margin-bottom:16px;">
+        <div class="grille-2">
+          <div>
+            <div class="eyebrow">Écart du mois (Recette totale − Versement)</div>
+            <div id="valeurEcartMensuel" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
+          </div>
+          <div>
+            <div class="eyebrow">Total non versé à ce jour (solde en caisse)</div>
+            <div id="valeurSoldeCaisse" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:600;">—</div>
+            <div class="texte-discret" id="comparaisonSoldeCaisse" style="font-size:0.78rem;"></div>
+          </div>
+        </div>
       </div>
 
       <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerSaisie">
@@ -142,7 +171,7 @@
   let centres = [];
   let collectesEquipe = [];
   let moisActif = moisActuel();
-  let preuveBase64 = null;
+  let preuves = { recette_realisee: null, recette_declaree: null, versement: null };
 
   if (session) {
     document.getElementById('nomEquipe').textContent = session.nom_equipe;
@@ -156,6 +185,7 @@
     window.addEventListener('offline', majIndicateurReseau);
 
     await chargerCentres();
+    await chargerCollectes();
     await FileAttente.synchroniser();
     majFileAttenteAffichage();
     afficherCentres();
@@ -241,43 +271,106 @@
 
   // ---------- Modale de saisie ----------
 
+  function moisPrecedentDe(mois) {
+    let [annee, m] = mois.split('-').map(Number);
+    m -= 1;
+    if (m === 0) { m = 12; annee -= 1; }
+    return annee + '-' + String(m).padStart(2, '0');
+  }
+
   function ouvrirModale(centreId) {
     const centre = centres.find(c => c.id === centreId);
     document.getElementById('titreModale').textContent = centre.nom + ' — ' + formaterMois(moisActif);
     document.getElementById('centreIdActuel').value = centreId;
     document.getElementById('messageModale').innerHTML = '';
-    document.getElementById('apercuFichier').textContent = '';
-    preuveBase64 = null;
+    preuves = { recette_realisee: null, recette_declaree: null, versement: null };
+    ['apercuRecetteRealisee', 'apercuRecetteDeclaree', 'apercuVersement'].forEach(id => document.getElementById(id).textContent = '');
     document.getElementById('formSaisie').reset();
     document.getElementById('centreIdActuel').value = centreId;
+
+    // Solde début : auto = solde fin du mois précédent pour ce centre, sinon saisie manuelle.
+    const moisPrec = moisPrecedentDe(moisActif);
+    const precedente = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisPrec);
+    const champSolde = document.getElementById('soldeDebut');
+    const noteSolde = document.getElementById('noteSoldeDebut');
+
+    if (precedente) {
+      champSolde.value = precedente.solde_fin_mois;
+      champSolde.readOnly = true;
+      champSolde.style.background = '#EFEAD8';
+      noteSolde.textContent = `Repris automatiquement du solde en caisse de ${formaterMois(moisPrec)}.`;
+    } else {
+      champSolde.value = '';
+      champSolde.readOnly = false;
+      champSolde.style.background = '';
+      noteSolde.textContent = 'Aucune collecte le mois précédent pour ce centre — saisie manuelle (première période).';
+    }
 
     // Pré-remplit si une saisie existe déjà pour ce mois.
     const existante = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisActif);
     if (existante) {
-      document.getElementById('soldeDebut').value = existante.solde_debut;
+      champSolde.value = existante.solde_debut;
       document.getElementById('recetteRealisee').value = existante.recette_realisee;
       document.getElementById('recetteDeclaree').value = existante.recette_declaree;
       document.getElementById('versementIntegre').value = existante.versement_integre;
       document.getElementById('valeurFinMois').value = existante.valeur_fin_mois;
+      if (existante.preuve_recette_realisee) document.getElementById('apercuRecetteRealisee').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
+      if (existante.preuve_recette_declaree) document.getElementById('apercuRecetteDeclaree').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
+      if (existante.preuve_versement) document.getElementById('apercuVersement').textContent = 'Preuve déjà enregistrée ✓ (facultatif de la remplacer)';
     }
 
+    majCalculEnDirect(precedente ? precedente.solde_fin_mois : null);
     document.getElementById('fondModale').classList.remove('cache');
   }
+
+  function majCalculEnDirect(soldeFinMoisPrecedent) {
+    const soldeDebut = Number(document.getElementById('soldeDebut').value) || 0;
+    const recetteRealisee = Number(document.getElementById('recetteRealisee').value) || 0;
+    const versementIntegre = Number(document.getElementById('versementIntegre').value) || 0;
+
+    const ecartMensuel = recetteRealisee - versementIntegre;
+    const soldeCaisse = soldeDebut + ecartMensuel;
+
+    document.getElementById('valeurEcartMensuel').textContent = ecartMensuel.toLocaleString('fr-FR');
+    document.getElementById('valeurSoldeCaisse').textContent = soldeCaisse.toLocaleString('fr-FR');
+
+    const zoneComparaison = document.getElementById('comparaisonSoldeCaisse');
+    if (soldeFinMoisPrecedent !== null && soldeFinMoisPrecedent !== undefined) {
+      const variation = soldeCaisse - soldeFinMoisPrecedent;
+      zoneComparaison.textContent = `Mois précédent : ${Number(soldeFinMoisPrecedent).toLocaleString('fr-FR')} (variation : ${variation >= 0 ? '+' : ''}${variation.toLocaleString('fr-FR')})`;
+    } else {
+      zoneComparaison.textContent = 'Pas de valeur de mois précédent pour comparaison.';
+    }
+  }
+
+  ['soldeDebut', 'recetteRealisee', 'versementIntegre'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const centreId = document.getElementById('centreIdActuel').value;
+      const moisPrec = moisPrecedentDe(moisActif);
+      const precedente = collectesEquipe.find(c => c.centre_id === centreId && String(c.mois) === moisPrec);
+      majCalculEnDirect(precedente ? precedente.solde_fin_mois : null);
+    });
+  });
 
   document.getElementById('btnFermerModale').addEventListener('click', () => {
     document.getElementById('fondModale').classList.add('cache');
   });
 
-  document.getElementById('preuvePhoto').addEventListener('change', (e) => {
-    const fichier = e.target.files[0];
-    if (!fichier) return;
-    const lecteur = new FileReader();
-    lecteur.onload = () => {
-      preuveBase64 = lecteur.result;
-      document.getElementById('apercuFichier').textContent = 'Photo prête : ' + fichier.name;
-    };
-    lecteur.readAsDataURL(fichier);
-  });
+  function ecouterPreuve(idInput, cle, idApercu) {
+    document.getElementById(idInput).addEventListener('change', (e) => {
+      const fichier = e.target.files[0];
+      if (!fichier) return;
+      const lecteur = new FileReader();
+      lecteur.onload = () => {
+        preuves[cle] = lecteur.result;
+        document.getElementById(idApercu).textContent = 'Photo prête : ' + fichier.name;
+      };
+      lecteur.readAsDataURL(fichier);
+    });
+  }
+  ecouterPreuve('preuveRecetteRealisee', 'recette_realisee', 'apercuRecetteRealisee');
+  ecouterPreuve('preuveRecetteDeclaree', 'recette_declaree', 'apercuRecetteDeclaree');
+  ecouterPreuve('preuveVersement', 'versement', 'apercuVersement');
 
   document.getElementById('formSaisie').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -293,7 +386,9 @@
       recette_declaree: document.getElementById('recetteDeclaree').value,
       versement_integre: document.getElementById('versementIntegre').value,
       valeur_fin_mois: document.getElementById('valeurFinMois').value,
-      preuve_base64: preuveBase64
+      preuve_recette_realisee_base64: preuves.recette_realisee,
+      preuve_recette_declaree_base64: preuves.recette_declaree,
+      preuve_versement_base64: preuves.versement
     };
 
     const resultat = await saveCollecteAvecRepli(donnees);
@@ -360,9 +455,11 @@
         <td class="texte">${centre.commune || ''}</td>
         <td>${c.ecart}</td>
         <td>${c.ecart_versement}</td>
+        <td>${c.ecart_mensuel}</td>
+        <td>${c.solde_fin_mois}</td>
         <td><span class="tampon ${tamponClasse}">${c.balance}</span></td>
       </tr>`;
-    }).join('') || '<tr><td colspan="6" class="texte texte-discret">Aucune saisie pour l\'instant.</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="texte texte-discret">Aucune saisie pour l\'instant.</td></tr>';
   }
 
   // ---------- Déconnexion ----------

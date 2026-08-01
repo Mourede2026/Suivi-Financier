@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Finance ZS-DAA — Dépenses</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16211C">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="entete-app">
+  <div class="marque">
+    <h1 id="nomEquipe">Équipe</h1>
+    <span class="eyebrow">Dépenses — Suivi Finance ZS-DAA</span>
+  </div>
+  <div class="infos-session">
+    <a href="equipe.html" class="bouton-discret" style="color:var(--papier); border-color: rgba(244,239,224,0.3); text-decoration:none; display:inline-block;">← Collecte</a>
+    <button class="bouton-discret" id="btnDeconnexion" style="color:var(--papier); border-color: rgba(244,239,224,0.3);">Déconnexion</button>
+  </div>
+</header>
+
+<nav class="onglets">
+  <button class="onglet actif" data-compte="Médicament">Compte Médicament</button>
+  <button class="onglet" data-compte="Fonctionnement">Compte Fonctionnement</button>
+</nav>
+
+<div class="conteneur">
+
+  <div class="rangee-stats" id="statsDepenses"></div>
+
+  <div class="fiche">
+    <div class="fiche-titre flex-entre">
+      <h2 class="mb-0" style="font-size:1.1rem;">Dette antérieure</h2>
+    </div>
+    <p class="texte-discret">Montant dû (ou en trop perçu) avant le début de l'utilisation de cette application, pour ce compte. A définir une seule fois.</p>
+    <div class="grille-3" style="align-items:end;">
+      <div class="champ mb-0">
+        <label for="detteAnterieure">Montant</label>
+        <input type="number" step="0.01" id="detteAnterieure">
+      </div>
+      <div class="champ mb-0">
+        <button class="bouton-discret" id="btnEnregistrerDette">Enregistrer</button>
+      </div>
+      <div class="champ mb-0" id="messageDette"></div>
+    </div>
+  </div>
+
+  <div class="fiche">
+    <div class="fiche-titre"><h2 class="mb-0" style="font-size:1.1rem;" id="titreNouvelleDepense">Ajouter une dépense — Médicament</h2></div>
+    <div id="messageDepense"></div>
+    <form id="formDepense">
+      <div class="grille-2">
+        <div class="champ">
+          <label for="dateDepense">Date de la dépense</label>
+          <input type="date" id="dateDepense" required>
+        </div>
+        <div class="champ">
+          <label for="montantDepense">Montant dépensé</label>
+          <input type="number" step="0.01" id="montantDepense" required>
+        </div>
+        <div class="champ">
+          <label for="dateJustification">Date de la justification (si disponible)</label>
+          <input type="date" id="dateJustification">
+        </div>
+        <div class="champ">
+          <label for="montantJustifie">Montant justifié</label>
+          <input type="number" step="0.01" id="montantJustifie">
+        </div>
+      </div>
+
+      <div class="grille-2 champBlDepot">
+        <div class="champ">
+          <label for="dateAchatDepot">Date d'achat au Dépôt Répartiteur</label>
+          <input type="date" id="dateAchatDepot">
+        </div>
+        <div class="champ">
+          <label for="montantBlDepot">Montant BL eSIGL du Dépôt Répartiteur</label>
+          <input type="number" step="0.01" id="montantBlDepot">
+        </div>
+      </div>
+
+      <div class="champ">
+        <label for="preuveDepense">Preuve / justificatif (obligatoire)</label>
+        <input type="file" id="preuveDepense" accept="image/*" capture="environment" required>
+        <p class="texte-discret" id="apercuPreuveDepense" style="margin-top:6px;"></p>
+      </div>
+
+      <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnEnregistrerDepense">
+        Enregistrer la dépense
+      </button>
+    </form>
+  </div>
+
+  <div class="fiche">
+    <div class="fiche-titre"><h2 class="mb-0" style="font-size:1.1rem;">Historique des dépenses</h2></div>
+    <div style="overflow-x:auto;">
+      <table id="tableDepenses">
+        <thead id="entetesTableDepenses"></thead>
+        <tbody id="corpsTableDepenses"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script>
+  const session = Session.exigerRole('equipe');
+  let compteActif = 'Médicament';
+  let toutesDepenses = [];
+  let toutesDettes = [];
+  let preuveDepenseBase64 = null;
+
+  if (session) {
+    document.getElementById('nomEquipe').textContent = session.nom_equipe;
+    initialiser();
+  }
+
+  async function initialiser() {
+    await chargerDepenses();
+    afficherPourCompte();
+  }
+
+  async function chargerDepenses() {
+    const r = await appelerApi('getDepensesEquipe');
+    if (r.ok) { toutesDepenses = r.depenses; toutesDettes = r.dettes_initiales; }
+  }
+
+  document.querySelectorAll('.onglet').forEach(bouton => {
+    bouton.addEventListener('click', () => {
+      document.querySelectorAll('.onglet').forEach(b => b.classList.remove('actif'));
+      bouton.classList.add('actif');
+      compteActif = bouton.dataset.compte;
+      afficherPourCompte();
+    });
+  });
+
+  function afficherPourCompte() {
+    const estMedicament = compteActif === 'Médicament';
+    document.querySelectorAll('.champBlDepot').forEach(el => el.style.display = estMedicament ? 'grid' : 'none');
+    document.getElementById('titreNouvelleDepense').textContent = 'Ajouter une dépense — ' + compteActif;
+
+    const lignes = toutesDepenses.filter(d => d.compte === compteActif);
+    const totalDepense = lignes.reduce((s, d) => s + (Number(d.montant_depense) || 0), 0);
+    const totalJustifie = lignes.reduce((s, d) => s + (Number(d.montant_justifie) || 0), 0);
+    const totalBl = lignes.reduce((s, d) => s + (Number(d.montant_bl_depot) || 0), 0);
+
+    const dette = toutesDettes.find(d => d.compte === compteActif);
+    const detteMontant = dette ? Number(dette.montant) || 0 : 0;
+    document.getElementById('detteAnterieure').value = detteMontant;
+
+    const ecart = (detteMontant + totalDepense) - totalJustifie;
+
+    let statsHtml = `
+      <div class="stat"><div class="valeur">${totalDepense.toLocaleString('fr-FR')}</div><div class="libelle">Total dépensé</div></div>
+      <div class="stat"><div class="valeur">${totalJustifie.toLocaleString('fr-FR')}</div><div class="libelle">Total justifié</div></div>
+      <div class="stat"><div class="valeur" style="color:${ecart===0?'var(--tampon-bon)':'var(--tampon-probleme)'}">${ecart.toLocaleString('fr-FR')}</div><div class="libelle">Écart (dette + dépenses − justifié)</div></div>
+    `;
+    if (estMedicament) {
+      statsHtml += `<div class="stat"><div class="valeur">${totalBl.toLocaleString('fr-FR')}</div><div class="libelle">Total BL Dépôt Répartiteur</div></div>`;
+    }
+    document.getElementById('statsDepenses').innerHTML = statsHtml;
+
+    // Table
+    const entetes = estMedicament
+      ? '<tr><th>Date dépense</th><th>Montant</th><th>Date justif.</th><th>Montant justifié</th><th>Date achat dépôt</th><th>Montant BL dépôt</th><th class="texte">Preuve</th></tr>'
+      : '<tr><th>Date dépense</th><th>Montant</th><th>Date justif.</th><th>Montant justifié</th><th class="texte">Preuve</th></tr>';
+    document.getElementById('entetesTableDepenses').innerHTML = entetes;
+
+    const lignesTri = [...lignes].sort((a, b) => String(b.date_depense).localeCompare(String(a.date_depense)));
+
+    document.getElementById('corpsTableDepenses').innerHTML = lignesTri.map(d => {
+      const preuve = d.preuve_url ? `<a href="${d.preuve_url}" target="_blank" rel="noopener">Voir</a>` : '—';
+      if (estMedicament) {
+        return `<tr>
+          <td>${d.date_depense || ''}</td><td>${Number(d.montant_depense||0).toLocaleString('fr-FR')}</td>
+          <td>${d.date_justification || ''}</td><td>${Number(d.montant_justifie||0).toLocaleString('fr-FR')}</td>
+          <td>${d.date_achat_depot || ''}</td><td>${Number(d.montant_bl_depot||0).toLocaleString('fr-FR')}</td>
+          <td class="texte">${preuve}</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td>${d.date_depense || ''}</td><td>${Number(d.montant_depense||0).toLocaleString('fr-FR')}</td>
+        <td>${d.date_justification || ''}</td><td>${Number(d.montant_justifie||0).toLocaleString('fr-FR')}</td>
+        <td class="texte">${preuve}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="${estMedicament?7:5}" class="texte texte-discret">Aucune dépense enregistrée pour ce compte.</td></tr>`;
+  }
+
+  document.getElementById('btnEnregistrerDette').addEventListener('click', async () => {
+    const montant = document.getElementById('detteAnterieure').value;
+    const r = await appelerApi('setDetteInitiale', { compte: compteActif, montant });
+    const zone = document.getElementById('messageDette');
+    zone.innerHTML = r.ok
+      ? `<span style="color:var(--tampon-bon); font-size:0.85rem;">Enregistré.</span>`
+      : `<span style="color:var(--tampon-probleme); font-size:0.85rem;">${r.error}</span>`;
+    await chargerDepenses();
+    afficherPourCompte();
+  });
+
+  document.getElementById('preuveDepense').addEventListener('change', (e) => {
+    const fichier = e.target.files[0];
+    if (!fichier) return;
+    const lecteur = new FileReader();
+    lecteur.onload = () => {
+      preuveDepenseBase64 = lecteur.result;
+      document.getElementById('apercuPreuveDepense').textContent = 'Photo prête : ' + fichier.name;
+    };
+    lecteur.readAsDataURL(fichier);
+  });
+
+  document.getElementById('formDepense').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnEnregistrerDepense');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement...';
+
+    const donnees = {
+      compte: compteActif,
+      date_depense: document.getElementById('dateDepense').value,
+      montant_depense: document.getElementById('montantDepense').value,
+      date_justification: document.getElementById('dateJustification').value,
+      montant_justifie: document.getElementById('montantJustifie').value,
+      date_achat_depot: document.getElementById('dateAchatDepot').value,
+      montant_bl_depot: document.getElementById('montantBlDepot').value,
+      preuve_base64: preuveDepenseBase64
+    };
+
+    const r = await appelerApi('saveDepense', donnees);
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer la dépense';
+
+    const zone = document.getElementById('messageDepense');
+    if (!r.ok) { zone.innerHTML = `<div class="message message-erreur">${r.error}</div>`; return; }
+
+    zone.innerHTML = `<div class="message message-succes">Dépense enregistrée.</div>`;
+    document.getElementById('formDepense').reset();
+    document.getElementById('apercuPreuveDepense').textContent = '';
+    preuveDepenseBase64 = null;
+    await chargerDepenses();
+    afficherPourCompte();
+  });
+
+  document.getElementById('btnDeconnexion').addEventListener('click', async () => {
+    await appelerApi('logout');
+    Session.effacer();
+    window.location.href = 'index.html';
+  });
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

@@ -8,13 +8,14 @@ const FICHIERS_A_METTRE_EN_CACHE = [
   './index.html',
   './equipe.html',
   './admin.html',
+  './depenses.html',
   './manifest.json',
   './css/style.css',
   './js/config.js',
   './js/session.js',
   './js/api.js',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', (evenement) => {
