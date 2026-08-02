@@ -1,7 +1,7 @@
 // ATTENTION : remplace cette valeur par l'URL de ton Web App Apps Script
 // une fois déployée (voir README.md, étape 3).
 // Elle ressemble à : https://script.google.com/macros/s/AKfycb.../exec
-const API_URL = 'COLLE_ICI_TON_URL_APPS_SCRIPT';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzubGezkNpUHiHaE-1_dwBpRcmTdMcxBDbzdWGF3T5NsqqqSH2Qsk-ct2h6DF8BBKgdiA/exec';
 
 const MOIS_LABELS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
