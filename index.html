@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Finance ZS-DAA — Connexion</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16211C">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="ecran">
+  <div class="fiche" style="max-width: 420px; width: 100%;">
+    <div style="text-align:center; margin-bottom: 24px;">
+      <div class="eyebrow">Zone Sanitaire Abomey · Agbangnizoun · Djidja</div>
+      <h1 style="font-size: 1.6rem;">Suivi Finance ZS-DAA</h1>
+      <p class="texte-discret mt-0">Registre de contrôle des recettes des centres de santé</p>
+    </div>
+
+    <div id="zoneMessage"></div>
+
+    <form id="formConnexion">
+      <div class="champ">
+        <label for="identifiant">Identifiant</label>
+        <input type="text" id="identifiant" autocomplete="username" required>
+      </div>
+      <div class="champ">
+        <label for="motDePasse">Mot de passe</label>
+        <input type="password" id="motDePasse" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="bouton-principal bouton-pleine-largeur" id="btnConnexion">
+        Se connecter
+      </button>
+    </form>
+
+    <p class="texte-discret" style="text-align:center; margin-top:18px; font-size:0.78rem;">
+      Identifiants fournis par l'administrateur de la collecte.
+    </p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script>
+  // Si déjà connecté, redirige directement.
+  (function () {
+    const s = Session.lire();
+    if (s && s.token) window.location.href = s.role === 'admin' ? 'admin.html' : 'equipe.html';
+  })();
+
+  const formulaire = document.getElementById('formConnexion');
+  const zoneMessage = document.getElementById('zoneMessage');
+  const btn = document.getElementById('btnConnexion');
+
+  formulaire.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    zoneMessage.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Connexion...';
+
+    const identifiant = document.getElementById('identifiant').value;
+    const motDePasse = document.getElementById('motDePasse').value;
+
+    const resultat = await appelerApi('login', { identifiant, mot_de_passe: motDePasse });
+
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+
+    if (!resultat.ok) {
+      zoneMessage.innerHTML = `<div class="message message-erreur">${resultat.error || 'Erreur de connexion.'}</div>`;
+      return;
+    }
+
+    Session.enregistrer(resultat);
+    window.location.href = resultat.role === 'admin' ? 'admin.html' : 'equipe.html';
+  });
+</script>
+
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>
